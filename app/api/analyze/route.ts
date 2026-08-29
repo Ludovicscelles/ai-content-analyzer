@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
 
+import "pdf-parse/worker";
+import { PDFParse } from "pdf-parse";
+
 // Initialize the OpenAI client with API key
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -41,22 +44,40 @@ export async function POST(request: Request) {
       );
     }
 
-    if (file.type !== "text/plain") {
-      return NextResponse.json(
-        { error: "Seuls les fichiers TXT sont acceptés."},
-        { status: 400 },
-      )
-    }
+    const allowedTypes = ["text/plain", "application/pdf"];
 
-    const content = await file.text();
-
-    if (content.trim() === "") {
+    if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: "Le fichier est vide." },
+        { error: "Seuls les fichiers TXT et PDF sont acceptés." },
         { status: 400 },
       );
     }
 
+    let content = "";
+
+    if (file.type === "text/plain") {
+      content = await file.text();
+    } else if (file.type === "application/pdf") {
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      const parser = new PDFParse({ data: buffer });
+
+      try {
+        const result = await parser.getText();
+
+        content = result.text;
+      } finally {
+        await parser.destroy();
+      }
+    }
+
+    if (content.trim() === "") {
+      return NextResponse.json(
+        { error: "Le fichier est vide ou aucun texte n'a pu être extrait." },
+        { status: 400 },
+      );
+    }
 
     const response = await openai.responses.parse({
       model: "gpt-5.6-luna",
