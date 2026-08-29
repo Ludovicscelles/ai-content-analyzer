@@ -13,11 +13,15 @@ const AnalysisResponse = z.object({
   description: z
     .string()
     .max(200, "La description ne doit pas dépasser 200 caractères."),
+
   summary: z.string(),
+
   keywords: z
     .array(z.string())
     .max(10, "Le nombre de mots-clés ne doit pas dépasser 10."),
+
   tone: z.string(),
+
   keyPoints: z
     .array(z.string())
     .max(8, "Le nombre de points clés ne doit pas dépasser 8."),
@@ -25,11 +29,34 @@ const AnalysisResponse = z.object({
 
 export async function POST(request: Request) {
   try {
-    const { content } = await request.json();
+    const formData = await request.formData();
+    const file = formData.get("file");
 
-    if (!content || typeof content !== "string" || content.trim() === "") {
-      return NextResponse.json({ error: "Contenu invalide." }, { status: 400 });
+    if (!(file instanceof File)) {
+      return NextResponse.json(
+        {
+          error: "Fichier invalide.",
+        },
+        { status: 400 },
+      );
     }
+
+    if (file.type !== "text/plain") {
+      return NextResponse.json(
+        { error: "Seuls les fichiers TXT sont acceptés."},
+        { status: 400 },
+      )
+    }
+
+    const content = await file.text();
+
+    if (content.trim() === "") {
+      return NextResponse.json(
+        { error: "Le fichier est vide." },
+        { status: 400 },
+      );
+    }
+
 
     const response = await openai.responses.parse({
       model: "gpt-5.6-luna",
