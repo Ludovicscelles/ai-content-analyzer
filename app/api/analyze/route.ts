@@ -38,8 +38,6 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file");
 
-    console.log("file type:", file instanceof File ? file.type : "not a file");
-
     if (!(file instanceof File)) {
       return NextResponse.json(
         {
