@@ -6,6 +6,8 @@ import { zodTextFormat } from "openai/helpers/zod";
 import "pdf-parse/worker";
 import { PDFParse } from "pdf-parse";
 
+import mammoth from "mammoth";
+
 // Initialize the OpenAI client with API key
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -32,8 +34,11 @@ const AnalysisResponse = z.object({
 
 export async function POST(request: Request) {
   try {
+    // formData is used to handle file uploads in the request
     const formData = await request.formData();
     const file = formData.get("file");
+
+    console.log("file type:", file instanceof File ? file.type : "not a file");
 
     if (!(file instanceof File)) {
       return NextResponse.json(
@@ -44,20 +49,31 @@ export async function POST(request: Request) {
       );
     }
 
-    const allowedTypes = ["text/plain", "application/pdf"];
+    const isTxt = file.type === "text/plain";
+    const isPdf = file.type === "application/pdf";
+    const isDocx =
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      (file.type === "application/octet-stream" &&
+        file.name.toLowerCase().endsWith(".docx"));
 
-    if (!allowedTypes.includes(file.type)) {
+    const allowedFilesTypes = [isTxt, isPdf, isDocx];
+
+    if (!allowedFilesTypes.some(Boolean)) {
       return NextResponse.json(
-        { error: "Seuls les fichiers TXT et PDF sont acceptés." },
+        {
+          error: "Seuls les fichiers TXT, PDF et DOCX sont acceptés.",
+        },
         { status: 400 },
       );
     }
 
     let content = "";
 
-    if (file.type === "text/plain") {
+    if (isTxt) {
       content = await file.text();
-    } else if (file.type === "application/pdf") {
+    } else if (isPdf) {
+      // Convert the PDF file to an ArrayBuffer and then to a Buffer for parsing
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
@@ -70,6 +86,14 @@ export async function POST(request: Request) {
       } finally {
         await parser.destroy();
       }
+    } else if (isDocx) {
+      // Extract raw text from DOCX file with Mammoth
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      const result = await mammoth.extractRawText({ buffer });
+
+      content = result.value;
     }
 
     if (content.trim() === "") {
