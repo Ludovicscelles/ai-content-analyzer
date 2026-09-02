@@ -3,11 +3,13 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --blue-analyze: #104bb1;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-blue-analyze: var(--blue-analyze);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -23,4 +25,26 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.blue-analyze-text {
+  color: var(--blue-analyze);
+}
+
+/* Style de la zone complète de la scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 30px;
+}
+
+/* Style de la piste de la scrollbar */
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Style de la poignée de la scrollbar */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--blue-analyze);
+  border-radius: 9999px;
+  border: 10px solid transparent;
+  background-clip: content-box;
 }
