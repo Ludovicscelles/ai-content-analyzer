@@ -31,6 +31,14 @@ body {
   color: var(--blue-analyze);
 }
 
+.section-title-h2 {
+  @apply w-full text-center mb-16 text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50;
+}
+
+.section-title-h3 {
+  @apply mb-4 text-left text-2xl font-bold;
+}
+
 /* Style de la zone complète de la scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 30px;
