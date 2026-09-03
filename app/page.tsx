@@ -1,8 +1,53 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import SubmitButton from "./components/SubmitButton";
 
+import { useState } from "react";
+
+type Analysis = {
+  description: string;
+  summary: string;
+  keywords: string[];
+  tone: string;
+  keyPoints: string[];
+};
+
 export default function Home() {
+  const [text, setText] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+
+  const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setText(event.target.value);
+  };
+
+  const router = useRouter();
+
+  const handleTextSubmit = () => {
+    const formData = new FormData();
+
+    if (text.trim() !== "") {
+      formData.append("text", text);
+    }
+
+    fetch("/api/analyze", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Response from API:", data);
+        setAnalysis(data);
+        sessionStorage.setItem("analysis", JSON.stringify(data));
+        router.push("/result");
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  };
+
   const handleClick = () => {
     console.log("Submit button clicked");
   };
@@ -27,8 +72,10 @@ export default function Home() {
                 dark:text-white
                 "
         placeholder="Entrez votre texte ici..."
+        value={text}
+        onChange={handleTextChange}
       />
-      <SubmitButton onClick={handleClick} />
+      <SubmitButton onClick={handleTextSubmit} />
 
       <h2 className="section-title-h2 mt-12">
         Ou déposez un fichier à analyser ci-dessous (formats pris en charge :
