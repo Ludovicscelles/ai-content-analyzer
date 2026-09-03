@@ -36,67 +36,72 @@ export async function POST(request: Request) {
   try {
     // formData is used to handle file uploads in the request
     const formData = await request.formData();
+
+    const text = formData.get("text");
     const file = formData.get("file");
-
-    if (!(file instanceof File)) {
-      return NextResponse.json(
-        {
-          error: "Fichier invalide.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const isTxt = file.type === "text/plain";
-    const isPdf = file.type === "application/pdf";
-    const isDocx =
-      file.type ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-      (file.type === "application/octet-stream" &&
-        file.name.toLowerCase().endsWith(".docx"));
-
-    const allowedFilesTypes = [isTxt, isPdf, isDocx];
-
-    if (!allowedFilesTypes.some(Boolean)) {
-      return NextResponse.json(
-        {
-          error: "Seuls les fichiers TXT, PDF et DOCX sont acceptés.",
-        },
-        { status: 400 },
-      );
-    }
 
     let content = "";
 
-    if (isTxt) {
-      content = await file.text();
-    } else if (isPdf) {
-      // Convert the PDF file to an ArrayBuffer and then to a Buffer for parsing
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+    // Use text input if provided, otherwise extract content from the uploaded file
+    if (typeof text === "string" && text.trim() !== "") {
+      content = text;
+    } else if (file instanceof File) {
+      const isTxt = file.type === "text/plain";
+      const isPdf = file.type === "application/pdf";
+      const isDocx =
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        (file.type === "application/octet-stream" &&
+          file.name.toLowerCase().endsWith(".docx"));
 
-      const parser = new PDFParse({ data: buffer });
+      const allowedFilesTypes = [isTxt, isPdf, isDocx];
 
-      try {
-        const result = await parser.getText();
-
-        content = result.text;
-      } finally {
-        await parser.destroy();
+      if (!allowedFilesTypes.some(Boolean)) {
+        return NextResponse.json(
+          {
+            error: "Seuls les fichiers TXT, PDF et DOCX sont acceptés.",
+          },
+          { status: 400 },
+        );
       }
-    } else if (isDocx) {
-      // Extract raw text from DOCX file with Mammoth
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
 
-      const result = await mammoth.extractRawText({ buffer });
+      if (isTxt) {
+        content = await file.text();
+      } else if (isPdf) {
+        // Convert the PDF file to an ArrayBuffer and then to a Buffer for parsing
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
 
-      content = result.value;
+        const parser = new PDFParse({ data: buffer });
+
+        try {
+          const result = await parser.getText();
+
+          content = result.text;
+        } finally {
+          await parser.destroy();
+        }
+      } else if (isDocx) {
+        // Extract raw text from DOCX file with Mammoth
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        const result = await mammoth.extractRawText({ buffer });
+
+        content = result.value;
+      }
+    } else {
+      return NextResponse.json(
+        {
+          error: "Veuillez fournir un texte ou un fichier à analyser.",
+        },
+        { status: 400 },
+      );
     }
 
     if (content.trim() === "") {
       return NextResponse.json(
-        { error: "Le fichier est vide ou aucun texte n'a pu être extrait." },
+        { error: "Le contenu est vide ou aucun texte n'a pu être extrait." },
         { status: 400 },
       );
     }
