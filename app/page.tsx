@@ -1,9 +1,15 @@
+"use client";
+
+import SubmitButton from "./components/SubmitButton";
+
 export default function Home() {
+  const handleClick = () => {
+    console.log("Submit button clicked");
+  };
+
   return (
     <div className="w-full">
-      <h2 className="section-title-h2">
-        Saisissez le texte à analyser :
-      </h2>
+      <h2 className="section-title-h2">Saisissez le texte à analyser :</h2>
       <textarea
         className="
                 h-80 w-full
@@ -16,14 +22,15 @@ export default function Home() {
                 custom-scrollbar
                 overflow-y-auto
                 resize-none
-                mb-16
                 dark:border-zinc-700 
                 dark:bg-zinc-900 
                 dark:text-white
                 "
         placeholder="Entrez votre texte ici..."
       />
-      <h2 className="section-title-h2">
+      <SubmitButton onClick={handleClick} />
+
+      <h2 className="section-title-h2 mt-12">
         Ou déposez un fichier à analyser ci-dessous (formats pris en charge :
         .txt, .docx, .pdf) :
       </h2>
@@ -57,6 +64,7 @@ export default function Home() {
           className="hidden"
         />
       </label>
+      <SubmitButton onClick={handleClick} />
     </div>
   );
 }
