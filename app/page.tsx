@@ -1,31 +1,27 @@
 "use client";
 
+// useRouter is imported from next/navigation to handle navigation after form submission
+// and to retrieve the analysis data from the API response
+// and store it in sessionStorage for later use on the result page.
 import { useRouter } from "next/navigation";
-
-import SubmitButton from "./components/SubmitButton";
 
 import { useState } from "react";
 
-type Analysis = {
-  description: string;
-  summary: string;
-  keywords: string[];
-  tone: string;
-  keyPoints: string[];
-};
+import ActionButton from "./components/ActionButton";
 
 export default function Home() {
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [analysis, setAnalysis] = useState<Analysis | null>(null);
 
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value);
   };
 
+  // Initialize the router for navigation
   const router = useRouter();
 
   const handleTextSubmit = () => {
+    // Create a new FormData object to hold the text data
     const formData = new FormData();
 
     if (text.trim() !== "") {
@@ -39,7 +35,6 @@ export default function Home() {
       .then((response) => response.json())
       .then((data) => {
         console.log("Response from API:", data);
-        setAnalysis(data);
         sessionStorage.setItem("analysis", JSON.stringify(data));
         router.push("/result");
       })
@@ -75,7 +70,7 @@ export default function Home() {
         value={text}
         onChange={handleTextChange}
       />
-      <SubmitButton onClick={handleTextSubmit} />
+      <ActionButton onClick={handleTextSubmit} text="Analyser le texte" />
 
       <h2 className="section-title-h2 mt-12">
         Ou déposez un fichier à analyser ci-dessous (formats pris en charge :
@@ -111,7 +106,7 @@ export default function Home() {
           className="hidden"
         />
       </label>
-      <SubmitButton onClick={handleClick} />
+      <ActionButton onClick={handleClick} text="Analyser le fichier" />
     </div>
   );
 }

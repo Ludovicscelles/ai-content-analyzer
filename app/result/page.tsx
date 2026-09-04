@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 
-type Analysis = {
-  description: string;
-  summary: string;
-  keywords: string[];
-  tone: string;
-  keyPoints: string[];
-};
+import type { Analysis } from "../types/Analysis";
+
+import ActionButton from "../components/ActionButton";
+
+import { useRouter } from "next/navigation";
 
 export default function ResultPage() {
+  const router = useRouter();
+
+  // Initialize the analysis state by retrieving it from sessionStorage
   const [analysis] = useState<Analysis | null>(() => {
     if (typeof window === "undefined") {
       return null;
@@ -29,6 +30,11 @@ export default function ResultPage() {
     );
   }
 
+  const handleReturnHome = () => {
+    sessionStorage.removeItem("analysis");
+    router.push("/");
+  };
+
   return (
     <div className="w-full">
       <h2 className="section-title-h2">
@@ -36,7 +42,7 @@ export default function ResultPage() {
       </h2>
       <div
         className="
-                h-200 w-full
+                h-full w-full
                 rounded-lg border-4 border-black
                 bg-white p-4 text-base text-black
                 dark:border-zinc-700
@@ -45,28 +51,25 @@ export default function ResultPage() {
                 "
       >
         <h3 className="section-title-h3">Description :</h3>
-        <p className="text-base text-black dark:text-white">
-          {analysis.description}
-        </p>
+        <p className="section-text">{analysis.description}</p>
         <h3 className="section-title-h3">Résumé :</h3>
-        <p className="text-base text-black dark:text-white">
-          {analysis.summary}
-        </p>
+        <p className="section-text">{analysis.summary}</p>
         <h3 className="section-title-h3">Mots-clés :</h3>
-        <ul className="list-disc pl-5 text-base text-black dark:text-white">
+        <ul className="section-text ul">
           {analysis.keywords.map((keyword) => (
             <li key={keyword}>{keyword}</li>
           ))}
         </ul>
         <h3 className="section-title-h3">Ton / Sujet :</h3>
-        <p className="text-base text-black dark:text-white">{analysis.tone}</p>
+        <p className="section-text">{analysis.tone}</p>
         <h3 className="section-title-h3">Points clés :</h3>
-        <ul className="list-disc pl-5 text-base text-black dark:text-white">
+        <ul className="section-text ul">
           {analysis.keyPoints.map((point) => (
             <li key={point}>{point}</li>
           ))}
         </ul>
       </div>
+      <ActionButton onClick={handleReturnHome} text="Retour à l'accueil" />
     </div>
   );
 }

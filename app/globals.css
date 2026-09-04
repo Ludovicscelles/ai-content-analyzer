@@ -39,6 +39,14 @@ body {
   @apply mb-4 text-left text-2xl font-bold;
 }
 
+.section-text {
+  @apply text-base text-left mb-4 text-black dark:text-white;
+}
+
+.section-text ul {
+  @apply list-disc pl-5 text-base text-black dark:text-white;
+}
+
 /* Style de la zone complète de la scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 30px;
