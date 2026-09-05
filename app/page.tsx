@@ -40,12 +40,21 @@ export default function Home() {
   // Initialize the router for navigation
   const router = useRouter();
 
-  const handleTextSubmit = () => {
-    // Create a new FormData object to hold the text data
+  const handleSubmit = (type: "text" | "file", errorMessage: string) => {
     const formData = new FormData();
 
-    if (text.trim() !== "") {
+    if (type === "text") {
+      if (text.trim() === "") {
+        alert(errorMessage);
+        return;
+      }
       formData.append("text", text);
+    } else if (type === "file") {
+      if (!file) {
+        alert(errorMessage);
+        return;
+      }
+      formData.append("file", file);
     }
 
     fetch("/api/analyze", {
@@ -56,7 +65,7 @@ export default function Home() {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || "Erreur lors de l'analyse du texte");
+          throw new Error(data.error || errorMessage);
         }
 
         return data;
@@ -67,39 +76,9 @@ export default function Home() {
         router.push("/result");
       })
       .catch((error) => {
-        console.error("Error:", error);
-      });
-  };
-
-  const handleFileSubmit = () => {
-    if (!file) {
-      console.error("No file selected");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    fetch("/api/analyze", {
-      method: "POST",
-      body: formData,
-    })
-      .then(async (response) => {
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Erreur lors de l'analyse du fichier");
-        }
-
-        return data;
-      })
-      .then((data: Analysis) => {
-        console.log("Response from API:", data);
-        sessionStorage.setItem("analysis", JSON.stringify(data));
-        router.push("/result");
-      })
-      .catch((error) => {
-        console.error("Error:", error);
+        const message =
+          error instanceof Error ? error.message : "Une erreur est survenue";
+        alert(`Erreur lors de l'analyse : ${message}`);
       });
   };
 
@@ -126,7 +105,10 @@ export default function Home() {
         value={text}
         onChange={handleTextChange}
       />
-      <ActionButton onClick={handleTextSubmit} text="Analyser le texte" />
+      <ActionButton
+        onClick={() => handleSubmit("text", "Aucun texte saisi")}
+        text="Analyser le texte"
+      />
 
       <h2 className="section-title-h2 mt-12">
         Ou déposez un fichier à analyser ci-dessous (formats pris en charge :
@@ -167,7 +149,12 @@ export default function Home() {
           onChange={handleFileChange}
         />
       </label>
-      <ActionButton onClick={handleFileSubmit} text="Analyser le fichier" />
+      <ActionButton
+        onClick={() =>
+          handleSubmit("file", "Aucun fichier sélectionné ou déposé")
+        }
+        text="Analyser le fichier"
+      />
     </div>
   );
 }
