@@ -1,13 +1,14 @@
 "use client";
 
-// useRouter is imported from next/navigation to handle navigation after form submission
-// and to retrieve the analysis data from the API response
-// and store it in sessionStorage for later use on the result page.
+// useRouter is used to navigate to the result page
+// after the analysis has been stored in sessionStorage.
 import { useRouter } from "next/navigation";
 
 import { useState } from "react";
 
 import ActionButton from "./components/ActionButton";
+
+import type { Analysis } from "./types/Analysis";
 
 export default function Home() {
   const [text, setText] = useState("");
@@ -15,6 +16,25 @@ export default function Home() {
 
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0] ?? null;
+    setFile(selectedFile);
+  };
+
+  // Handle drag and drop events for the file upload
+
+  // Prevent the default behavior when a file is dragged over the label
+  const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+  };
+
+  // Handle the drop event when a file is dropped onto the label
+  const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    const droppedFile = event.dataTransfer.files?.[0] ?? null;
+    setFile(droppedFile);
   };
 
   // Initialize the router for navigation
@@ -32,8 +52,16 @@ export default function Home() {
       method: "POST",
       body: formData,
     })
-      .then((response) => response.json())
-      .then((data) => {
+      .then(async (response) => {
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Erreur lors de l'analyse du texte");
+        }
+
+        return data;
+      })
+      .then((data: Analysis) => {
         console.log("Response from API:", data);
         sessionStorage.setItem("analysis", JSON.stringify(data));
         router.push("/result");
@@ -43,8 +71,36 @@ export default function Home() {
       });
   };
 
-  const handleClick = () => {
-    console.log("Submit button clicked");
+  const handleFileSubmit = () => {
+    if (!file) {
+      console.error("No file selected");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    fetch("/api/analyze", {
+      method: "POST",
+      body: formData,
+    })
+      .then(async (response) => {
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Erreur lors de l'analyse du fichier");
+        }
+
+        return data;
+      })
+      .then((data: Analysis) => {
+        console.log("Response from API:", data);
+        sessionStorage.setItem("analysis", JSON.stringify(data));
+        router.push("/result");
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   };
 
   return (
@@ -78,6 +134,8 @@ export default function Home() {
       </h2>
       <label
         htmlFor="file-upload"
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
         className="
                 flex h-80 w-full cursor-pointer
                 flex-col items-center justify-center
@@ -94,19 +152,22 @@ export default function Home() {
                 "
       >
         <p className="text-lg font-medium text-black dark:text-white">
-          Déposez votre fichier ici
+          {file ? file.name : "Déposez un fichier ici"}
         </p>
         <p className="mt-2 text-sm text-zinc-500">
-          ou cliquez pour sélectionner un fichier
+          {file
+            ? "Cliquez pour changer le fichier"
+            : "Ou cliquez pour sélectionner un fichier"}
         </p>
         <input
           id="file-upload"
           type="file"
           accept=".txt,.docx,.pdf"
           className="hidden"
+          onChange={handleFileChange}
         />
       </label>
-      <ActionButton onClick={handleClick} text="Analyser le fichier" />
+      <ActionButton onClick={handleFileSubmit} text="Analyser le fichier" />
     </div>
   );
 }
