@@ -1,10 +1,11 @@
 "use client";
 
-type SubmitButtonProps = {
+type ActionButtonProps = {
   onClick: () => void;
+  text: string;
 };
 
-export default function SubmitButton({ onClick }: SubmitButtonProps) {
+export default function ActionButton ({ onClick, text }: ActionButtonProps) {
   return (
     <button
       type="submit"
@@ -13,7 +14,7 @@ export default function SubmitButton({ onClick }: SubmitButtonProps) {
       "
       onClick={onClick}
     >
-      Analyser le texte
+      {text}
     </button>
   );
 }

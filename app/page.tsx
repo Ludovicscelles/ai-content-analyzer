@@ -1,31 +1,47 @@
 "use client";
 
+// useRouter is used to navigate to the result page
+// after the analysis has been stored in sessionStorage.
 import { useRouter } from "next/navigation";
-
-import SubmitButton from "./components/SubmitButton";
 
 import { useState } from "react";
 
-type Analysis = {
-  description: string;
-  summary: string;
-  keywords: string[];
-  tone: string;
-  keyPoints: string[];
-};
+import ActionButton from "./components/ActionButton";
+
+import type { Analysis } from "./types/Analysis";
 
 export default function Home() {
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [analysis, setAnalysis] = useState<Analysis | null>(null);
 
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value);
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0] ?? null;
+    setFile(selectedFile);
+  };
+
+  // Handle drag and drop events for the file upload
+
+  // Prevent the default behavior when a file is dragged over the label
+  const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+  };
+
+  // Handle the drop event when a file is dropped onto the label
+  const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    const droppedFile = event.dataTransfer.files?.[0] ?? null;
+    setFile(droppedFile);
+  };
+
+  // Initialize the router for navigation
   const router = useRouter();
 
   const handleTextSubmit = () => {
+    // Create a new FormData object to hold the text data
     const formData = new FormData();
 
     if (text.trim() !== "") {
@@ -36,10 +52,17 @@ export default function Home() {
       method: "POST",
       body: formData,
     })
-      .then((response) => response.json())
-      .then((data) => {
+      .then(async (response) => {
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Erreur lors de l'analyse du texte");
+        }
+
+        return data;
+      })
+      .then((data: Analysis) => {
         console.log("Response from API:", data);
-        setAnalysis(data);
         sessionStorage.setItem("analysis", JSON.stringify(data));
         router.push("/result");
       })
@@ -48,8 +71,36 @@ export default function Home() {
       });
   };
 
-  const handleClick = () => {
-    console.log("Submit button clicked");
+  const handleFileSubmit = () => {
+    if (!file) {
+      console.error("No file selected");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    fetch("/api/analyze", {
+      method: "POST",
+      body: formData,
+    })
+      .then(async (response) => {
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Erreur lors de l'analyse du fichier");
+        }
+
+        return data;
+      })
+      .then((data: Analysis) => {
+        console.log("Response from API:", data);
+        sessionStorage.setItem("analysis", JSON.stringify(data));
+        router.push("/result");
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   };
 
   return (
@@ -75,7 +126,7 @@ export default function Home() {
         value={text}
         onChange={handleTextChange}
       />
-      <SubmitButton onClick={handleTextSubmit} />
+      <ActionButton onClick={handleTextSubmit} text="Analyser le texte" />
 
       <h2 className="section-title-h2 mt-12">
         Ou déposez un fichier à analyser ci-dessous (formats pris en charge :
@@ -83,6 +134,8 @@ export default function Home() {
       </h2>
       <label
         htmlFor="file-upload"
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
         className="
                 flex h-80 w-full cursor-pointer
                 flex-col items-center justify-center
@@ -99,19 +152,22 @@ export default function Home() {
                 "
       >
         <p className="text-lg font-medium text-black dark:text-white">
-          Déposez votre fichier ici
+          {file ? file.name : "Déposez un fichier ici"}
         </p>
         <p className="mt-2 text-sm text-zinc-500">
-          ou cliquez pour sélectionner un fichier
+          {file
+            ? "Cliquez pour changer le fichier"
+            : "Ou cliquez pour sélectionner un fichier"}
         </p>
         <input
           id="file-upload"
           type="file"
           accept=".txt,.docx,.pdf"
           className="hidden"
+          onChange={handleFileChange}
         />
       </label>
-      <SubmitButton onClick={handleClick} />
+      <ActionButton onClick={handleFileSubmit} text="Analyser le fichier" />
     </div>
   );
 }
