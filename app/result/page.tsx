@@ -55,7 +55,7 @@ export default function ResultPage() {
         <h3 className="section-title-h3">Résumé :</h3>
         <p className="section-text">{analysis.summary}</p>
         <h3 className="section-title-h3">Mots-clés :</h3>
-        <ul className="section-text ul">
+        <ul className="section-text grid grid-cols-2 gap-x-6 gap-y-2">
           {analysis.keywords.map((keyword) => (
             <li key={keyword}>{keyword}</li>
           ))}
@@ -63,7 +63,7 @@ export default function ResultPage() {
         <h3 className="section-title-h3">Ton / Sujet :</h3>
         <p className="section-text">{analysis.tone}</p>
         <h3 className="section-title-h3">Points clés :</h3>
-        <ul className="section-text ul">
+        <ul className="section-text">
           {analysis.keyPoints.map((point) => (
             <li key={point}>{point}</li>
           ))}
