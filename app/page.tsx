@@ -13,6 +13,9 @@ import type { Analysis } from "./types/Analysis";
 export default function Home() {
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [isLoadingType, setIsLoadingType] = useState<"text" | "file" | null>(
+    null,
+  );
 
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value);
@@ -57,6 +60,8 @@ export default function Home() {
       formData.append("file", file);
     }
 
+    setIsLoadingType(type);
+
     fetch("/api/analyze", {
       method: "POST",
       body: formData,
@@ -76,8 +81,11 @@ export default function Home() {
         router.push("/result");
       })
       .catch((error) => {
+        setIsLoadingType(null);
+
         const message =
           error instanceof Error ? error.message : "Une erreur est survenue";
+
         alert(`Erreur lors de l'analyse : ${message}`);
       });
   };
@@ -107,7 +115,8 @@ export default function Home() {
       />
       <ActionButton
         onClick={() => handleSubmit("text", "Aucun texte saisi")}
-        text="Analyser le texte"
+        text={isLoadingType === "text" ? "Analyse en cours..." : "Analyser le texte"}
+        disabled={isLoadingType !== null}
       />
 
       <h2 className="section-title-h2 mt-12">
@@ -153,7 +162,12 @@ export default function Home() {
         onClick={() =>
           handleSubmit("file", "Aucun fichier sélectionné ou déposé")
         }
-        text="Analyser le fichier"
+        text={
+          isLoadingType === "file"
+            ? "Analyse en cours..."
+            : "Analyser le fichier"
+        }
+        disabled={isLoadingType !== null}
       />
     </div>
   );
