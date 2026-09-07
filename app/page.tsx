@@ -92,19 +92,33 @@ export default function Home() {
 
   return (
     <div className="w-full">
-      <h2 className="section-title-h2">Saisissez le texte à analyser :</h2>
+      <h2 className="section-title-h2">Saisissez le texte à analyser&nbsp;:</h2>
       <textarea
         className="
-                h-80 w-full
-                rounded-lg border-4 border-gray-300
-                bg-white p-4 text-base text-black 
+                h-80
+                w-full
+                max-w-3xl
+                box-border
+                p-4
+
+                rounded-lg 
+                border-4 
+                border-gray-300
+
+                bg-white 
+                text-base 
+                text-black 
+
                 outline-none 
+
                 focus:border-black
                 focus:ring-1 
                 focus:ring-blue-analyze 
+
                 custom-scrollbar
                 overflow-y-auto
                 resize-none
+                
                 dark:border-zinc-700 
                 dark:bg-zinc-900 
                 dark:text-white
@@ -115,14 +129,18 @@ export default function Home() {
       />
       <ActionButton
         onClick={() => handleSubmit("text", "Aucun texte saisi")}
-        text={isLoadingType === "text" ? "Analyse en cours..." : "Analyser le texte"}
+        text={
+          isLoadingType === "text" ? "Analyse en cours..." : "Analyser le texte"
+        }
         disabled={isLoadingType !== null}
       />
 
       <h2 className="section-title-h2 mt-12">
-        Ou déposez un fichier à analyser ci-dessous (formats pris en charge :
-        .txt, .docx, .pdf) :
+        Ou déposez un fichier à analyser ci-dessous&nbsp;:
       </h2>
+      <p className="text-base text-center">
+        Formats acceptés : .txt, .docx, .pdf
+      </p>
       <label
         htmlFor="file-upload"
         onDragOver={handleDragOver}
