@@ -38,7 +38,7 @@ export default function ResultPage() {
   return (
     <div className="w-full">
       <h2 className="section-title-h2">
-        Résultats de l&apos;analyse du texte :
+        Résultat de l&apos;analyse&nbsp;:
       </h2>
       <div
         className="
